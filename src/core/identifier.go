@@ -35,7 +35,7 @@ type LogicalIdentifiable interface {
 	LogicalID() Identifier
 }
 
-var _ Transform[Identifier] = ToLogicalID{}
+var _ Transform[Expression, Identifier] = ToLogicalID{}
 
 func (g ToLogicalID) EstimateCost(ctx *Context, from Expression) (Cost, error) {
 	return Cost{}, nil
@@ -58,7 +58,7 @@ type PhysicalIdentifiable interface {
 	PhysicalID() Identifier
 }
 
-var _ Transform[Identifier] = ToPhysicalID{}
+var _ Transform[Expression, Identifier] = ToPhysicalID{}
 
 func (g ToPhysicalID) EstimateCost(ctx *Context, from Expression) (Cost, error) {
 	return Cost{}, nil
@@ -81,7 +81,7 @@ type CanonicalIdentifiable interface {
 	CanonicalID(*Context) (Identifier, error)
 }
 
-var _ Transform[Identifier] = ToCanonicalID{}
+var _ Transform[Expression, Identifier] = ToCanonicalID{}
 
 func (g ToCanonicalID) EstimateCost(ctx *Context, from Expression) (Cost, error) {
 	return Cost{}, nil

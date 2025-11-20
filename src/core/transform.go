@@ -2,9 +2,9 @@ package core
 
 import "iter"
 
-type Transform[To Expression] interface {
-	EstimateCost(ctx *Context, from Expression) (Cost, error)
-	Apply(ctx *Context, from Expression, to *To) (steps TransformSteps)
+type Transform[From Expression, To Expression] interface {
+	EstimateCost(ctx *Context, from From) (Cost, error)
+	Apply(ctx *Context, from From, to *To) (steps TransformSteps)
 }
 
 type TransformSteps = iter.Seq2[*TransformStep, error]

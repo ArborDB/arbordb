@@ -1,10 +1,10 @@
 package core
 
-func Apply[To Expression](
+func Apply[From Expression, To Expression](
 	ctx *Context,
 	yield func(*TransformStep, error) bool,
-	transform Transform[To],
-	from Expression,
+	transform Transform[From, To],
+	from From,
 	to *To,
 ) {
 	for step, err := range transform.Apply(ctx, from, to) {
