@@ -53,3 +53,5 @@ func (a Array[T]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, er
 		}
 	}
 }
+
+//TODO implement Dict for Array
