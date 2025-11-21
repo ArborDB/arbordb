@@ -1,6 +1,11 @@
 package core
 
-import "fmt"
+import (
+	"crypto/sha256"
+	"encoding/hex"
+
+	"github.com/ArborDB/arbordb/src/dshash"
+)
 
 type Identifier struct {
 	Kind string
@@ -40,6 +45,7 @@ func (g ToLogicalID) EstimateCost(ctx *Context, from Expression) (Cost, error) {
 func (g ToLogicalID) Apply(ctx *Context, from Expression, to *Identifier) TransformSteps {
 	return func(yield func(*TransformStep, error) bool) {
 		switch from := from.(type) {
+
 		case LogicalIdentifiable:
 			id, err := from.LogicalID(ctx)
 			if err != nil {
@@ -48,8 +54,16 @@ func (g ToLogicalID) Apply(ctx *Context, from Expression, to *Identifier) Transf
 			}
 			*to = id
 			return
+
 		}
-		yield(nil, fmt.Errorf("logical id not supported: %T", from))
+
+		id, err := hash(from)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		*to = id
+
 	}
 }
 
@@ -68,6 +82,7 @@ func (g ToPhysicalID) EstimateCost(ctx *Context, from Expression) (Cost, error) 
 func (g ToPhysicalID) Apply(ctx *Context, from Expression, to *Identifier) TransformSteps {
 	return func(yield func(*TransformStep, error) bool) {
 		switch from := from.(type) {
+
 		case PhysicalIdentifiable:
 			id, err := from.PhysicalID(ctx)
 			if err != nil {
@@ -76,8 +91,16 @@ func (g ToPhysicalID) Apply(ctx *Context, from Expression, to *Identifier) Trans
 			}
 			*to = id
 			return
+
 		}
-		yield(nil, fmt.Errorf("physical id not supported: %T", from))
+
+		id, err := hash(from)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		*to = id
+
 	}
 }
 
@@ -96,6 +119,7 @@ func (g ToCanonicalID) EstimateCost(ctx *Context, from Expression) (Cost, error)
 func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) TransformSteps {
 	return func(yield func(*TransformStep, error) bool) {
 		switch from := from.(type) {
+
 		case CanonicalIdentifiable:
 			id, err := from.CanonicalID(ctx)
 			if err != nil {
@@ -104,7 +128,28 @@ func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) Tran
 			}
 			*to = id
 			return
+
 		}
-		yield(nil, fmt.Errorf("canonical id not supported: %T", from))
+
+		//TODO resolve all identifiers recursively in `from`
+
+		id, err := hash(from)
+		if err != nil {
+			yield(nil, err)
+			return
+		}
+		*to = id
+
 	}
+}
+
+func hash(expr Expression) (id Identifier, err error) {
+	state := sha256.New()
+	if err = dshash.Hash(state, expr); err != nil {
+		return
+	}
+	return Identifier{
+		Kind: "dshash-sha256",
+		Key:  hex.EncodeToString(state.Sum(nil)),
+	}, nil
 }
