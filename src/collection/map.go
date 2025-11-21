@@ -1,8 +1,10 @@
 package collection
 
 import (
+	"cmp"
 	"fmt"
 	"iter"
+	"slices"
 
 	"github.com/ArborDB/arbordb/src/core"
 	"github.com/ArborDB/arbordb/src/scalar"
@@ -52,4 +54,22 @@ func (m Map[K, V]) IterDict(ctx *core.Context) iter.Seq2[KV[K, V], error] {
 	}
 }
 
-//TODO implement IterCanonical
+var _ core.CanonicalList = Map[scalar.Int, scalar.Int]{}
+
+func (m Map[K, V]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, error] {
+	return func(yield func(core.Expression, error) bool) {
+		keys := make([]K, 0, len(m))
+		for k := range m {
+			keys = append(keys, k)
+		}
+		slices.SortFunc(keys, func(a, b K) int {
+			return cmp.Compare(a.String(), b.String())
+		})
+		for _, k := range keys {
+			v := m[k]
+			if !yield(KV[K, V]{Key: k, Value: v}, nil) {
+				return
+			}
+		}
+	}
+}
