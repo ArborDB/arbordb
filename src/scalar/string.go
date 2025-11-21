@@ -10,14 +10,6 @@ type String string
 
 var _ core.Expression = String("")
 
-func (s String) CanApply(transform any) bool {
-	switch transform.(type) {
-	case core.ToLogicalID, core.ToPhysicalID, core.ToCanonicalID:
-		return true
-	}
-	return false
-}
-
 func (s String) String() string {
 	return string(s)
 }

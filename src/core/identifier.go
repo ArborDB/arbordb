@@ -13,10 +13,6 @@ func (i Identifier) String() string {
 	return i.Kind + ":" + i.Key
 }
 
-func (i Identifier) CanApply(transform any) bool {
-	return false
-}
-
 func (i Identifier) LogicalID() Identifier {
 	return i
 }

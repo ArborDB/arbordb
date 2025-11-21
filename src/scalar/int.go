@@ -11,14 +11,6 @@ type Int int
 
 var _ core.Expression = Int(0)
 
-func (i Int) CanApply(transform any) bool {
-	switch transform.(type) {
-	case core.ToLogicalID, core.ToPhysicalID, core.ToCanonicalID:
-		return true
-	}
-	return false
-}
-
 func (i Int) String() string {
 	return strconv.Itoa(int(i))
 }

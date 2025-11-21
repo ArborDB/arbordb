@@ -15,13 +15,6 @@ type ListRemovePosition[T core.Expression] struct {
 
 var _ core.Expression = ListRemovePosition[scalar.Int]{}
 
-func (l ListRemovePosition[T]) CanApply(transform any) bool {
-	if _, ok := transform.(ListToArray[T]); ok {
-		return true
-	}
-	return false
-}
-
 func (l ListRemovePosition[T]) String() string {
 	return fmt.Sprintf(`ListRemovePosition(%v, %v)`, l.List, l.Position)
 }
@@ -78,13 +71,6 @@ type ListRemoveElement[T core.Ordered[T]] struct {
 }
 
 var _ core.Expression = ListRemoveElement[scalar.Int]{}
-
-func (l ListRemoveElement[T]) CanApply(transform any) bool {
-	if _, ok := transform.(ListToArray[T]); ok {
-		return true
-	}
-	return false
-}
 
 func (l ListRemoveElement[T]) String() string {
 	return fmt.Sprintf(`ListRemoveElement(%v, %v)`, l.List, l.Element)
