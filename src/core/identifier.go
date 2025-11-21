@@ -153,8 +153,6 @@ func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) Tran
 				h.Write([]byte{byte(CanonicalTagListEnd)})
 				return nil
 
-				// TODO: Add support for CanonicalMap and other canonical structures.
-
 			default:
 				return fmt.Errorf("type %T does not support canonical identification", expr)
 			}
