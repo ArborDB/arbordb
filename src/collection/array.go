@@ -54,4 +54,32 @@ func (a Array[T]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, er
 	}
 }
 
-//TODO implement Dict for Array
+var _ Dict[scalar.Int, scalar.Int] = Array[scalar.Int]{}
+
+func (a Array[T]) Get(ctx *core.Context, key scalar.Int) (T, error) {
+	i := int(key)
+	if i < 0 || i >= len(a) {
+		var zero T
+		return zero, fmt.Errorf("index %d out of bounds for array of length %d", i, len(a))
+	}
+	return a[i], nil
+}
+
+func (a Array[T]) Exists(ctx *core.Context, key scalar.Int) (bool, error) {
+	i := int(key)
+	return i >= 0 && i < len(a), nil
+}
+
+func (a Array[T]) Size(ctx *core.Context) (int, error) {
+	return len(a), nil
+}
+
+func (a Array[T]) IterDict(ctx *core.Context) iter.Seq2[KV[scalar.Int, T], error] {
+	return func(yield func(KV[scalar.Int, T], error) bool) {
+		for i, v := range a {
+			if !yield(KV[scalar.Int, T]{Key: scalar.Int(i), Value: v}, nil) {
+				return
+			}
+		}
+	}
+}
