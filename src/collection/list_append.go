@@ -48,3 +48,19 @@ func (l ListAppend[T]) Iter(ctx *core.Context) iter.Seq2[T, error] {
 		yield(l.Element, nil)
 	}
 }
+
+var _ core.CanonicalList = ListAppend[scalar.Int]{}
+
+func (l ListAppend[T]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, error] {
+	return func(yield func(core.Expression, error) bool) {
+		for v, err := range l.Iter(ctx) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if !yield(v, nil) {
+				return
+			}
+		}
+	}
+}

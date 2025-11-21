@@ -76,3 +76,19 @@ func (l ListInsert[T]) At(ctx *core.Context, index int) (T, error) {
 	}
 	return l.List.At(ctx, index-1)
 }
+
+var _ core.CanonicalList = ListInsert[scalar.Int]{}
+
+func (l ListInsert[T]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, error] {
+	return func(yield func(core.Expression, error) bool) {
+		for v, err := range l.Iter(ctx) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			if !yield(v, nil) {
+				return
+			}
+		}
+	}
+}
