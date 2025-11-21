@@ -26,6 +26,7 @@ func (l ListToArray[E]) Apply(ctx *core.Context, from List[E], to *Array[E]) (st
 		for elem, err := range from.Iter(ctx) {
 			if err != nil {
 				yield(nil, err)
+				return
 			}
 			*to = append(*to, elem)
 		}
