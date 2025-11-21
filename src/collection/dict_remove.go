@@ -1,8 +1,10 @@
 package collection
 
 import (
+	"cmp"
 	"fmt"
 	"iter"
+	"slices"
 
 	"github.com/ArborDB/arbordb/src/core"
 	"github.com/ArborDB/arbordb/src/scalar"
@@ -65,6 +67,37 @@ func (dr DictRemove[K, V]) IterDict(ctx *core.Context) iter.Seq2[KV[K, V], error
 				continue
 			}
 			if !yield(kv, nil) {
+				return
+			}
+		}
+	}
+}
+
+var _ core.CanonicalList = DictRemove[scalar.String, scalar.Int]{}
+
+func (dr DictRemove[K, V]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, error] {
+	return func(yield func(core.Expression, error) bool) {
+		allKVs := make(map[K]V)
+		for kv, err := range dr.Dict.IterDict(ctx) {
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			allKVs[kv.Key] = kv.Value
+		}
+		delete(allKVs, dr.Key)
+
+		keys := make([]K, 0, len(allKVs))
+		for k := range allKVs {
+			keys = append(keys, k)
+		}
+		slices.SortFunc(keys, func(a, b K) int {
+			return cmp.Compare(a.String(), b.String())
+		})
+
+		for _, k := range keys {
+			v := allKVs[k]
+			if !yield(KV[K, V]{Key: k, Value: v}, nil) {
 				return
 			}
 		}
