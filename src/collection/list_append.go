@@ -16,6 +16,9 @@ type ListAppend[T core.Expression] struct {
 var _ core.Expression = ListAppend[scalar.Int]{}
 
 func (l ListAppend[T]) CanApply(transform any) bool {
+	if _, ok := transform.(ListToArray[T]); ok {
+		return true
+	}
 	return false
 }
 

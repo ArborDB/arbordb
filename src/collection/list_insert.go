@@ -17,6 +17,9 @@ type ListInsert[T core.Expression] struct {
 var _ core.Expression = ListInsert[scalar.Int]{}
 
 func (l ListInsert[T]) CanApply(transform any) bool {
+	if _, ok := transform.(ListToArray[T]); ok {
+		return true
+	}
 	return false
 }
 
