@@ -7,6 +7,7 @@ import (
 )
 
 type List[T core.Expression] interface {
+	core.Expression
 	Length(ctx *core.Context) (int, error)
 	IsEmpty(ctx *core.Context) (bool, error)
 	Iter(ctx *core.Context) iter.Seq2[T, error]

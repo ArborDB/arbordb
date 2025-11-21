@@ -1,12 +1,24 @@
 package collection
 
 import (
+	"fmt"
+	"iter"
+
 	"github.com/ArborDB/arbordb/src/core"
 	"github.com/ArborDB/arbordb/src/scalar"
-	"iter"
 )
 
 type Array[T core.Expression] []T
+
+var _ core.Expression = Array[scalar.Int]{}
+
+func (a Array[T]) CanApply(transform any) bool {
+	return false
+}
+
+func (a Array[T]) String() string {
+	return fmt.Sprintf(`Array(%v)`, []T(a))
+}
 
 var _ List[scalar.Int] = Array[scalar.Int]{}
 
