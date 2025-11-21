@@ -131,14 +131,7 @@ func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) Tran
 
 		}
 
-		//TODO resolve all identifiers recursively in `from`
-
-		id, err := hash(from)
-		if err != nil {
-			yield(nil, err)
-			return
-		}
-		*to = id
+		//TODO
 
 	}
 }
