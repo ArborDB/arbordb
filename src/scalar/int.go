@@ -17,23 +17,23 @@ func (i Int) String() string {
 
 var _ core.LogicalIdentifiable = Int(0)
 
-func (i Int) LogicalID() core.Identifier {
+func (i Int) LogicalID(ctx *core.Context) (core.Identifier, error) {
 	return core.Identifier{
 		Kind: "int",
 		Key:  strconv.Itoa(int(i)),
-	}
+	}, nil
 }
 
 var _ core.PhysicalIdentifiable = Int(0)
 
-func (i Int) PhysicalID() core.Identifier {
-	return i.LogicalID()
+func (i Int) PhysicalID(ctx *core.Context) (core.Identifier, error) {
+	return i.LogicalID(ctx)
 }
 
 var _ core.CanonicalIdentifiable = Int(0)
 
-func (i Int) CanonicalID(*core.Context) (core.Identifier, error) {
-	return i.LogicalID(), nil
+func (i Int) CanonicalID(ctx *core.Context) (core.Identifier, error) {
+	return i.LogicalID(ctx)
 }
 
 var _ core.Ordered[Int] = Int(0)

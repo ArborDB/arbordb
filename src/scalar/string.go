@@ -16,23 +16,23 @@ func (s String) String() string {
 
 var _ core.LogicalIdentifiable = String("")
 
-func (s String) LogicalID() core.Identifier {
+func (s String) LogicalID(ctx *core.Context) (core.Identifier, error) {
 	return core.Identifier{
 		Kind: "string",
 		Key:  string(s),
-	}
+	}, nil
 }
 
 var _ core.PhysicalIdentifiable = String("")
 
-func (s String) PhysicalID() core.Identifier {
-	return s.LogicalID()
+func (s String) PhysicalID(ctx *core.Context) (core.Identifier, error) {
+	return s.LogicalID(ctx)
 }
 
 var _ core.CanonicalIdentifiable = String("")
 
-func (s String) CanonicalID(*core.Context) (core.Identifier, error) {
-	return s.LogicalID(), nil
+func (s String) CanonicalID(ctx *core.Context) (core.Identifier, error) {
+	return s.LogicalID(ctx)
 }
 
 var _ core.Ordered[String] = String("")

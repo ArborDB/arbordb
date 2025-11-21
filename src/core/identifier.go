@@ -13,12 +13,12 @@ func (i Identifier) String() string {
 	return i.Kind + ":" + i.Key
 }
 
-func (i Identifier) LogicalID() Identifier {
-	return i
+func (i Identifier) LogicalID(*Context) (Identifier, error) {
+	return i, nil
 }
 
-func (i Identifier) PhysicalID() Identifier {
-	return i
+func (i Identifier) PhysicalID(*Context) (Identifier, error) {
+	return i, nil
 }
 
 func (i Identifier) CanonicalID(*Context) (Identifier, error) {
@@ -28,7 +28,7 @@ func (i Identifier) CanonicalID(*Context) (Identifier, error) {
 type ToLogicalID struct{}
 
 type LogicalIdentifiable interface {
-	LogicalID() Identifier
+	LogicalID(*Context) (Identifier, error)
 }
 
 var _ Transform[Expression, Identifier] = ToLogicalID{}
@@ -41,7 +41,12 @@ func (g ToLogicalID) Apply(ctx *Context, from Expression, to *Identifier) Transf
 	return func(yield func(*TransformStep, error) bool) {
 		switch from := from.(type) {
 		case LogicalIdentifiable:
-			*to = from.LogicalID()
+			id, err := from.LogicalID(ctx)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			*to = id
 			return
 		}
 		yield(nil, fmt.Errorf("logical id not supported: %T", from))
@@ -51,7 +56,7 @@ func (g ToLogicalID) Apply(ctx *Context, from Expression, to *Identifier) Transf
 type ToPhysicalID struct{}
 
 type PhysicalIdentifiable interface {
-	PhysicalID() Identifier
+	PhysicalID(*Context) (Identifier, error)
 }
 
 var _ Transform[Expression, Identifier] = ToPhysicalID{}
@@ -64,7 +69,12 @@ func (g ToPhysicalID) Apply(ctx *Context, from Expression, to *Identifier) Trans
 	return func(yield func(*TransformStep, error) bool) {
 		switch from := from.(type) {
 		case PhysicalIdentifiable:
-			*to = from.PhysicalID()
+			id, err := from.PhysicalID(ctx)
+			if err != nil {
+				yield(nil, err)
+				return
+			}
+			*to = id
 			return
 		}
 		yield(nil, fmt.Errorf("physical id not supported: %T", from))
