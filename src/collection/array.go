@@ -41,3 +41,15 @@ var _ RandomAccessList[scalar.Int] = Array[scalar.Int]{}
 func (a Array[T]) At(ctx *core.Context, index int) (T, error) {
 	return a[index], nil
 }
+
+var _ core.CanonicalList = Array[scalar.Int]{}
+
+func (a Array[T]) IterCanonical(ctx *core.Context) iter.Seq2[core.Expression, error] {
+	return func(yield func(core.Expression, error) bool) {
+		for _, elem := range a {
+			if !yield(elem, nil) {
+				return
+			}
+		}
+	}
+}

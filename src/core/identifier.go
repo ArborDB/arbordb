@@ -3,6 +3,10 @@ package core
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
+	"hash"
+	"reflect"
+	"unsafe"
 
 	"github.com/ArborDB/arbordb/src/dshash"
 )
@@ -16,18 +20,6 @@ var _ Expression = Identifier{}
 
 func (i Identifier) String() string {
 	return i.Kind + ":" + i.Key
-}
-
-func (i Identifier) LogicalID(*Context) (Identifier, error) {
-	return i, nil
-}
-
-func (i Identifier) PhysicalID(*Context) (Identifier, error) {
-	return i, nil
-}
-
-func (i Identifier) CanonicalID(*Context) (Identifier, error) {
-	return i, nil
 }
 
 type ToLogicalID struct{}
@@ -57,7 +49,7 @@ func (g ToLogicalID) Apply(ctx *Context, from Expression, to *Identifier) Transf
 
 		}
 
-		id, err := hash(from)
+		id, err := structuralHash(from)
 		if err != nil {
 			yield(nil, err)
 			return
@@ -94,7 +86,7 @@ func (g ToPhysicalID) Apply(ctx *Context, from Expression, to *Identifier) Trans
 
 		}
 
-		id, err := hash(from)
+		id, err := structuralHash(from)
 		if err != nil {
 			yield(nil, err)
 			return
@@ -118,25 +110,69 @@ func (g ToCanonicalID) EstimateCost(ctx *Context, from Expression) (Cost, error)
 
 func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) TransformSteps {
 	return func(yield func(*TransformStep, error) bool) {
-		switch from := from.(type) {
+		state := sha256.New()
+		visited := make(map[unsafe.Pointer]struct{})
 
-		case CanonicalIdentifiable:
-			id, err := from.CanonicalID(ctx)
-			if err != nil {
-				yield(nil, err)
-				return
+		var hashRecursive func(h hash.Hash, expr Expression) error
+		hashRecursive = func(h hash.Hash, expr Expression) error {
+			if expr == nil {
+				h.Write([]byte{CanonicalTagNil})
+				return nil
 			}
-			*to = id
-			return
 
+			val := reflect.ValueOf(expr)
+			if val.Kind() == reflect.Pointer && !val.IsNil() {
+				ptr := val.UnsafePointer()
+				if _, ok := visited[ptr]; ok {
+					return nil // cycle detected
+				}
+				visited[ptr] = struct{}{}
+			}
+
+			switch e := expr.(type) {
+			case CanonicalIdentifiable:
+				id, err := e.CanonicalID(ctx)
+				if err != nil {
+					return err
+				}
+				// Hash the identifier string representation, e.g., "int:42"
+				h.Write([]byte{byte(CanonicalTagString)})
+				h.Write([]byte(id.String()))
+				return nil
+
+			case CanonicalList:
+				h.Write([]byte{byte(CanonicalTagList)})
+				for item, err := range e.IterCanonical(ctx) {
+					if err != nil {
+						return err
+					}
+					if err := hashRecursive(h, item); err != nil {
+						return err
+					}
+				}
+				h.Write([]byte{byte(CanonicalTagListEnd)})
+				return nil
+
+				// TODO: Add support for CanonicalMap and other canonical structures.
+
+			default:
+				return fmt.Errorf("type %T does not support canonical identification", expr)
+			}
 		}
 
-		//TODO
+		if err := hashRecursive(state, from); err != nil {
+			yield(nil, err)
+			return
+		}
 
+		*to = Identifier{
+			Kind: "canonical-sha256",
+			Key:  hex.EncodeToString(state.Sum(nil)),
+		}
 	}
 }
 
-func hash(expr Expression) (id Identifier, err error) {
+func structuralHash(expr Expression) (id Identifier, err error) {
 	state := sha256.New()
 	if err = dshash.Hash(state, expr); err != nil {
 		return
