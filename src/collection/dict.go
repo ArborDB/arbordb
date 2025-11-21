@@ -11,6 +11,7 @@ type Dict[K interface {
 	comparable
 	core.Expression
 }, V core.Expression] interface {
+	core.Expression
 	Get(ctx *core.Context, key K) (value V, err error)
 	Exists(ctx *core.Context, key K) (bool, error)
 	Size(ctx *core.Context) (int, error)
