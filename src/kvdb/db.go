@@ -52,7 +52,8 @@ func (db *DB) Begin(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		db:         db,
 		baseRootID: rootID,
-		rootExpr:   rootExpr,
+		baseExpr:   rootExpr,
+		mutations:  make(map[string]*string),
 		ctx:        c,
 	}, nil
 }
@@ -60,7 +61,8 @@ func (db *DB) Begin(ctx context.Context) (*Tx, error) {
 type Tx struct {
 	db         *DB
 	baseRootID core.Identifier
-	rootExpr   collection.Dict[scalar.String, scalar.String]
+	baseExpr   collection.Dict[scalar.String, scalar.String]
+	mutations  map[string]*string
 	ctx        *core.Context
 	mu         sync.Mutex
 }
@@ -69,7 +71,14 @@ func (tx *Tx) Get(key string) (string, error) {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
 
-	val, err := tx.rootExpr.Get(tx.ctx, scalar.String(key))
+	if val, ok := tx.mutations[key]; ok {
+		if val == nil {
+			return "", fmt.Errorf("key %v not found", key)
+		}
+		return *val, nil
+	}
+
+	val, err := tx.baseExpr.Get(tx.ctx, scalar.String(key))
 	if err != nil {
 		return "", err
 	}
@@ -79,22 +88,14 @@ func (tx *Tx) Get(key string) (string, error) {
 func (tx *Tx) Put(key string, value string) error {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
-
-	tx.rootExpr = collection.DictSet[scalar.String, scalar.String]{
-		Dict:  tx.rootExpr,
-		Key:   scalar.String(key),
-		Value: scalar.String(value),
-	}
+	tx.mutations[key] = &value
 	return nil
 }
 
 func (tx *Tx) Delete(key string) error {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
-	tx.rootExpr = collection.DictRemove[scalar.String, scalar.String]{
-		Dict: tx.rootExpr,
-		Key:  scalar.String(key),
-	}
+	tx.mutations[key] = nil
 	return nil
 }
 
@@ -104,12 +105,21 @@ func (tx *Tx) Commit() error {
 	tx.mu.Lock()
 	defer tx.mu.Unlock()
 
-	// Materialize the modified dict to a Map
+	// Materialize the base dict to a Map
 	var newMap collection.Map[scalar.String, scalar.String]
 	transform := collection.DictToMap[scalar.String, scalar.String]{}
 
-	if err := transform.Apply(tx.ctx, tx.rootExpr, &newMap); err != nil {
+	if err := transform.Apply(tx.ctx, tx.baseExpr, &newMap); err != nil {
 		return fmt.Errorf("materialize: %w", err)
+	}
+
+	// Apply mutations
+	for k, v := range tx.mutations {
+		if v == nil {
+			delete(newMap, scalar.String(k))
+		} else {
+			newMap[scalar.String(k)] = scalar.String(*v)
+		}
 	}
 
 	// Store the new Map
