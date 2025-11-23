@@ -78,6 +78,13 @@ func makeFunc(t reflect.Type) _HashFunc {
 		if elemType == byteType {
 			// []byte or [...]byte
 			return func(ctx *Context, value reflect.Value) error {
+				if value.Kind() == reflect.Array && !value.CanAddr() {
+					// reflect.Value.Bytes() panics if the array is not addressable.
+					// We must copy it to a slice to access the bytes safely.
+					tmp := make([]byte, value.Len())
+					reflect.Copy(reflect.ValueOf(tmp), value)
+					return encodeBytes(ctx, tmp)
+				}
 				return encodeBytes(ctx, value.Bytes())
 			}
 		}

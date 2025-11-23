@@ -312,3 +312,18 @@ func TestHashCollision_StringInjection(t *testing.T) {
 		t.Fatal("collision detected for string injection")
 	}
 }
+
+func TestHashNonAddressableArray(t *testing.T) {
+	// A struct with an array field
+	type S struct {
+		Arr [4]byte
+	}
+
+	// Hash operates on interface{}, so passing S{} passes the struct by value.
+	// Inside reflection, the struct Value is not addressable, and accessing
+	// the Arr field yields a non-addressable array Value.
+	// This previously triggered a panic in reflect.Value.Bytes().
+	if err := Hash(sha256.New(), S{Arr: [4]byte{1, 2, 3, 4}}); err != nil {
+		t.Fatal(err)
+	}
+}
