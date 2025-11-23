@@ -152,6 +152,13 @@ func encodeStruct(ctx *Context, value reflect.Value, infos []*_FieldInfo) error 
 			// hash will not change after adding fields with zero values
 			continue
 		}
+
+		info.Once.Do(func() {
+			if info.Field.Type.Kind() != reflect.Interface {
+				info.Func = getFunc(info.Field.Type)
+			}
+		})
+
 		if info.Func != nil {
 			if err := encodeString(ctx, info.Field.Name); err != nil {
 				return err

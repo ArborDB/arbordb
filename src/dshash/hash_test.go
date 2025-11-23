@@ -327,3 +327,38 @@ func TestHashNonAddressableArray(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+type RecursiveStruct struct {
+	Children []RecursiveStruct
+}
+
+func TestRecursiveStruct(t *testing.T) {
+	// This test previously caused a stack overflow during initialization
+	s := RecursiveStruct{
+		Children: []RecursiveStruct{
+			{},
+		},
+	}
+	h := sha256.New()
+	if err := Hash(h, s); err != nil {
+		t.Fatal(err)
+	}
+}
+
+type StructWithRecursiveSlice struct {
+	Name     string
+	Elements []StructWithRecursiveSlice
+}
+
+func TestStructWithRecursiveSlice(t *testing.T) {
+	s := StructWithRecursiveSlice{
+		Name: "root",
+		Elements: []StructWithRecursiveSlice{
+			{Name: "child"},
+		},
+	}
+	h := sha256.New()
+	if err := Hash(h, s); err != nil {
+		t.Fatal(err)
+	}
+}

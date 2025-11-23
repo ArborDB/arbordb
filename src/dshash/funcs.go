@@ -15,6 +15,7 @@ var funcs sync.Map // reflect.Type -> _HashFunc
 type _FieldInfo struct {
 	Field reflect.StructField
 	Func  _HashFunc
+	Once  sync.Once
 }
 
 func makeFunc(t reflect.Type) _HashFunc {
@@ -89,10 +90,13 @@ func makeFunc(t reflect.Type) _HashFunc {
 			}
 		}
 		var fn _HashFunc
-		if elemType.Kind() != reflect.Interface {
-			fn = getFunc(elemType)
-		}
+		var once sync.Once
 		return func(ctx *Context, value reflect.Value) error {
+			once.Do(func() {
+				if elemType.Kind() != reflect.Interface {
+					fn = getFunc(elemType)
+				}
+			})
 			return encodeList(ctx, value, fn)
 		}
 
@@ -103,13 +107,8 @@ func makeFunc(t reflect.Type) _HashFunc {
 			if isUnsupported(field.Type) {
 				continue
 			}
-			var fn _HashFunc
-			if field.Type.Kind() != reflect.Interface {
-				fn = getFunc(field.Type)
-			}
 			infos = append(infos, &_FieldInfo{
 				Field: field,
-				Func:  fn,
 			})
 		}
 		slices.SortFunc(infos, func(a, b *_FieldInfo) int {
@@ -121,13 +120,16 @@ func makeFunc(t reflect.Type) _HashFunc {
 
 	case reflect.Map:
 		var keyFunc, valueFunc _HashFunc
-		if t.Key().Kind() != reflect.Interface {
-			keyFunc = getFunc(t.Key())
-		}
-		if t.Elem().Kind() != reflect.Interface {
-			valueFunc = getFunc(t.Elem())
-		}
+		var once sync.Once
 		return func(ctx *Context, value reflect.Value) error {
+			once.Do(func() {
+				if t.Key().Kind() != reflect.Interface {
+					keyFunc = getFunc(t.Key())
+				}
+				if t.Elem().Kind() != reflect.Interface {
+					valueFunc = getFunc(t.Elem())
+				}
+			})
 			return encodeMap(ctx, value, keyFunc, valueFunc)
 		}
 
