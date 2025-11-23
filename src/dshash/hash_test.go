@@ -362,3 +362,69 @@ func TestStructWithRecursiveSlice(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestDAGConsistency(t *testing.T) {
+	// Scenario: Two structures representing the same value, but one is a DAG (shared pointer) and one is a Tree.
+	// They should hash to the same value if we want value-semantics (unrolled).
+
+	i := 42
+	p := &i
+
+	// DAG: [p, p]
+	dag := []*int{p, p}
+
+	// Tree: [p, q] where *p == *q
+	j := 42
+	q := &j
+	tree := []*int{p, q}
+
+	h1 := sha256.New()
+	if err := Hash(h1, dag); err != nil {
+		t.Fatal(err)
+	}
+	sum1 := hex.EncodeToString(h1.Sum(nil))
+
+	h2 := sha256.New()
+	if err := Hash(h2, tree); err != nil {
+		t.Fatal(err)
+	}
+	sum2 := hex.EncodeToString(h2.Sum(nil))
+
+	if sum1 != sum2 {
+		t.Fatalf("DAG and Tree should produce same hash (value semantics), got %s vs %s", sum1, sum2)
+	}
+}
+
+func TestMapDeterminism(t *testing.T) {
+	// Scenario: Map keys share a pointer. Random iteration order shouldn't change hash.
+
+	type Key struct {
+		Ptr *int
+		ID  int
+	}
+
+	i := 42
+	p := &i
+
+	// Keys share 'p'
+	m := map[Key]int{
+		{Ptr: p, ID: 1}: 1,
+		{Ptr: p, ID: 2}: 2,
+		{Ptr: p, ID: 3}: 3,
+	}
+
+	// Run multiple times to trigger random map iteration
+	var firstSum string
+	for range 100 {
+		h := sha256.New()
+		if err := Hash(h, m); err != nil {
+			t.Fatal(err)
+		}
+		sum := hex.EncodeToString(h.Sum(nil))
+		if firstSum == "" {
+			firstSum = sum
+		} else if sum != firstSum {
+			t.Fatalf("Non-deterministic hash detected: %s vs %s", firstSum, sum)
+		}
+	}
+}
