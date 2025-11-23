@@ -108,17 +108,8 @@ func (tx *Tx) Commit() error {
 	var newMap collection.Map[scalar.String, scalar.String]
 	transform := collection.DictToMap[scalar.String, scalar.String]{}
 
-	var applyErr error
-	core.Apply(tx.ctx, func(step *core.TransformStep, err error) bool {
-		if err != nil {
-			applyErr = err
-			return false
-		}
-		return true
-	}, transform, tx.rootExpr, &newMap)
-
-	if applyErr != nil {
-		return fmt.Errorf("materialize: %w", applyErr)
+	if err := transform.Apply(tx.ctx, tx.rootExpr, &newMap); err != nil {
+		return fmt.Errorf("materialize: %w", err)
 	}
 
 	// Store the new Map
