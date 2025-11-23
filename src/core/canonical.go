@@ -16,4 +16,5 @@ const (
 	CanonicalTagString  = 20
 	CanonicalTagList    = 30
 	CanonicalTagListEnd = 40
+	CanonicalTagCycle   = 50
 )

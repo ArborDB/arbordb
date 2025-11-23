@@ -117,6 +117,7 @@ func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) erro
 		if val.Kind() == reflect.Pointer && !val.IsNil() {
 			ptr := val.UnsafePointer()
 			if _, ok := visited[ptr]; ok {
+				h.Write([]byte{byte(CanonicalTagCycle)})
 				return nil // cycle detected
 			}
 			visited[ptr] = struct{}{}
