@@ -121,6 +121,7 @@ func (g ToCanonicalID) Apply(ctx *Context, from Expression, to *Identifier) erro
 				return nil // cycle detected
 			}
 			visited[ptr] = struct{}{}
+			defer delete(visited, ptr)
 		}
 
 		switch e := expr.(type) {
