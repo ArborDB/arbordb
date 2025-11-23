@@ -32,8 +32,7 @@ func makeFunc(t reflect.Type) _HashFunc {
 				return encodeNil(ctx)
 			}
 			if _, ok := ctx.visited[value.UnsafePointer()]; ok {
-				// visited
-				return nil
+				return encodeCycle(ctx)
 			}
 			ctx.visited[value.UnsafePointer()] = struct{}{}
 			elemFunc := getFunc(t.Elem())

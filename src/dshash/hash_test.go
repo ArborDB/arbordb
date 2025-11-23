@@ -17,7 +17,7 @@ func TestHash(t *testing.T) {
 		sum   string
 	}
 
-	for _, _case := range []Case{
+	for i, _case := range []Case{
 
 		// bool
 		{
@@ -41,7 +41,7 @@ func TestHash(t *testing.T) {
 		{
 			value: ptrTo(ptrTo((any)(false))),
 			sum:   "5aeca385d8b781825b07bbec7c858b7170426c88088935850bc13dd6402368a5",
-		},
+		}, // 5
 		{
 			value: ptrTo((any)(ptrTo(ptrTo((any)(false))))),
 			sum:   "5aeca385d8b781825b07bbec7c858b7170426c88088935850bc13dd6402368a5",
@@ -65,7 +65,7 @@ func TestHash(t *testing.T) {
 		{
 			value: uint32(42),
 			sum:   "140ccf58356b7f90f7e93fdd5e1eb4407b54dd0d8cbb0395f52c29b1d2ae7fba",
-		},
+		}, // 10
 
 		// float
 		{
@@ -80,7 +80,7 @@ func TestHash(t *testing.T) {
 		// string
 		{
 			value: "foo",
-			sum:   "57e5773169334a5b22bd1e0bb1d7ff09522cd2ea978a4e0c42fea1ceef605fad",
+			sum:   "c2b6962cc1364738a0a5e4ab23a856100ed4297eee43bee139012142aab26276",
 		},
 
 		// array and slice
@@ -91,7 +91,7 @@ func TestHash(t *testing.T) {
 		{
 			value: [2]int{42, 1},
 			sum:   "193e34c2e4dc72b1da2864a71bc694b7ba82fa5e4f4dd24f4784b6a16f1a86c6",
-		},
+		}, // 15
 		{
 			value: [2]int32{42, 1},
 			sum:   "193e34c2e4dc72b1da2864a71bc694b7ba82fa5e4f4dd24f4784b6a16f1a86c6",
@@ -114,7 +114,7 @@ func TestHash(t *testing.T) {
 				A: 42,
 				B: 1,
 			},
-			sum: "27fb15b6e91ee74e320afc0361ae9c929fdf145734eb231c47a15547dfc3d65d",
+			sum: "66784164dbe8d890564ef2f1fb0ec5e5ab98daf9deb5ccee1e455fc1ef4d83a9",
 		},
 		{
 			value: struct {
@@ -126,8 +126,8 @@ func TestHash(t *testing.T) {
 				B: 1,
 				C: "", // zero C
 			},
-			sum: "27fb15b6e91ee74e320afc0361ae9c929fdf145734eb231c47a15547dfc3d65d",
-		},
+			sum: "66784164dbe8d890564ef2f1fb0ec5e5ab98daf9deb5ccee1e455fc1ef4d83a9",
+		}, // 20
 		{
 			value: struct {
 				A int
@@ -138,7 +138,7 @@ func TestHash(t *testing.T) {
 				B: 1,
 				C: "foo", // non-zero C
 			},
-			sum: "88a0faef79f4bd8dc116d709ab1990f457f04bb7586e80b98c35ea0386c37950",
+			sum: "61eb6e17bb030eca37c3c3c980c64bb8bdd17550abcde1c66668d0cd878a2ba1",
 		},
 		{
 			value: struct {
@@ -151,7 +151,7 @@ func TestHash(t *testing.T) {
 				B: 1,
 				C: "foo",
 			},
-			sum: "88a0faef79f4bd8dc116d709ab1990f457f04bb7586e80b98c35ea0386c37950",
+			sum: "61eb6e17bb030eca37c3c3c980c64bb8bdd17550abcde1c66668d0cd878a2ba1",
 		},
 		{
 			value: struct {
@@ -166,7 +166,7 @@ func TestHash(t *testing.T) {
 				C: "foo",
 				D: func() {},
 			},
-			sum: "88a0faef79f4bd8dc116d709ab1990f457f04bb7586e80b98c35ea0386c37950",
+			sum: "61eb6e17bb030eca37c3c3c980c64bb8bdd17550abcde1c66668d0cd878a2ba1",
 		},
 		{
 			value: struct {
@@ -180,7 +180,7 @@ func TestHash(t *testing.T) {
 				C: "foo",
 				D: func() {},
 			},
-			sum: "88a0faef79f4bd8dc116d709ab1990f457f04bb7586e80b98c35ea0386c37950",
+			sum: "61eb6e17bb030eca37c3c3c980c64bb8bdd17550abcde1c66668d0cd878a2ba1",
 		},
 
 		// map
@@ -190,8 +190,8 @@ func TestHash(t *testing.T) {
 				"B": 1,
 				"C": "foo",
 			},
-			sum: "88a0faef79f4bd8dc116d709ab1990f457f04bb7586e80b98c35ea0386c37950",
-		},
+			sum: "3f13ec63968c60912ebbe37f28ebb024d340f1b13b5dd14d9e68f87b5bd20e65",
+		}, // 25
 		{
 			value: map[string]any{
 				"A": 42,
@@ -199,7 +199,7 @@ func TestHash(t *testing.T) {
 				"C": "foo",
 				"D": nil, // nil value
 			},
-			sum: "1e932111bc5736f6d7b496c5132bda1e4c3e0dd693d59cfe05c25d1687be7ee1",
+			sum: "6c55ea82aca985825d1d14fd6760643b1eab819383a15752c8ec6f59f37b1d1c",
 		},
 
 		// unsupported types
@@ -241,7 +241,7 @@ func TestHash(t *testing.T) {
 		}
 		sum := hex.EncodeToString(state.Sum(nil))
 		if sum != _case.sum {
-			t.Fatalf("mismatch: %+v, got %v", _case, sum)
+			t.Fatalf("%d, mismatch: %+v, got %v", i+1, _case, sum)
 		}
 	}
 }
@@ -274,5 +274,41 @@ func TestHashCycle(t *testing.T) {
 	sum2 := fmt.Sprintf("%x", h.Sum(nil))
 	if sum1 != sum2 {
 		t.Fatal()
+	}
+}
+
+func TestHashCollision_PointerReuse(t *testing.T) {
+	i := 42
+	p := &i
+	v1 := []*int{p}
+	v2 := []*int{p, p}
+
+	h1 := sha256.New()
+	Hash(h1, v1)
+	sum1 := hex.EncodeToString(h1.Sum(nil))
+
+	h2 := sha256.New()
+	Hash(h2, v2)
+	sum2 := hex.EncodeToString(h2.Sum(nil))
+
+	if sum1 == sum2 {
+		t.Fatal("collision detected for pointer reuse")
+	}
+}
+
+func TestHashCollision_StringInjection(t *testing.T) {
+	v1 := []string{"\x3c"}
+	v2 := []string{"", ""}
+
+	h1 := sha256.New()
+	Hash(h1, v1)
+	sum1 := hex.EncodeToString(h1.Sum(nil))
+
+	h2 := sha256.New()
+	Hash(h2, v2)
+	sum2 := hex.EncodeToString(h2.Sum(nil))
+
+	if sum1 == sum2 {
+		t.Fatal("collision detected for string injection")
 	}
 }

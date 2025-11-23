@@ -22,6 +22,7 @@ var (
 	KindListEnd      = Kind{75}
 	KindMap          = Kind{80}
 	KindMapEnd       = Kind{85}
+	KindCycle        = Kind{90}
 )
 
 func encodeNil(ctx *Context) error {
@@ -92,6 +93,9 @@ func encodeString(ctx *Context, value string) error {
 	if err != nil {
 		return err
 	}
+	if err := binary.Write(ctx.state, binary.LittleEndian, int64(len(value))); err != nil {
+		return err
+	}
 	if _, err := ctx.state.Write([]byte(value)); err != nil {
 		return err
 	}
@@ -101,6 +105,9 @@ func encodeString(ctx *Context, value string) error {
 func encodeBytes(ctx *Context, value []byte) error {
 	_, err := ctx.state.Write(KindString[:])
 	if err != nil {
+		return err
+	}
+	if err := binary.Write(ctx.state, binary.LittleEndian, int64(len(value))); err != nil {
 		return err
 	}
 	if _, err := ctx.state.Write(value); err != nil {
@@ -226,6 +233,14 @@ func encodeMap(ctx *Context, value reflect.Value, keyFunc _HashFunc, valueFunc _
 		}
 	}
 	_, err = ctx.state.Write(KindMapEnd[:])
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func encodeCycle(ctx *Context) error {
+	_, err := ctx.state.Write(KindCycle[:])
 	if err != nil {
 		return err
 	}
